@@ -3,33 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Player Lumnis Arrastável</title>
+  <title>Player Lumnis</title>
   <style>
     :root {
-      --color-yellow: #edff7d;
-      --color-green: #00c670;
-      --color-teal: #48c7c4;
-      --color-blue: #0081e3;
-      --color-dark-blue: #000568;
-      --color-indigo: #1608db;
       --color-purple: #340868;
     }
 
     body {
       margin: 0;
       padding: 0;
-      background: #f0f0f0;
+      background: transparent;
     }
 
     #music-container {
       position: fixed;
       bottom: 20px;
-      right: 20px; /* Inicial no canto inferior direito */
+      right: 20px;
       z-index: 9999;
       display: flex;
       align-items: center;
       gap: 10px;
-      cursor: move;
+      flex-direction: row-reverse;
+    }
+
+    #music-toggle-wrapper {
+      position: relative;
+      width: 50px;
+      height: 50px;
     }
 
     #music-toggle {
@@ -37,19 +37,34 @@
       height: 50px;
       border-radius: 50%;
       background-color: var(--color-purple);
-      color: white !important;
+      color: white;
       font-size: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
       border: none;
-      cursor: grab;
+      cursor: pointer;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
       backdrop-filter: blur(6px);
     }
 
+    #close-btn {
+      position: absolute;
+      top: -10px;
+      right: -10px;
+      background: #000;
+      border: none;
+      color: white;
+      font-size: 14px;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+
     #player-box {
-      background-color: rgba(20, 20, 20, 0.9);
+      background-color: rgba(20, 20, 20, 0.95);
       color: white;
       border-radius: 12px;
       padding: 10px;
@@ -58,7 +73,6 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
       backdrop-filter: blur(8px);
       display: none;
-      position: absolute;
     }
 
     #player-header {
@@ -92,7 +106,10 @@
 <body>
 
 <div id="music-container">
-  <button id="music-toggle">🎵</button>
+  <div id="music-toggle-wrapper">
+    <button id="music-toggle">🎵</button>
+    <button id="close-btn">✖</button>
+  </div>
   <div id="player-box">
     <div id="player-header">
       <span>Playlist Lumnis</span>
@@ -112,44 +129,14 @@
   const toggleBtn = document.getElementById('music-toggle');
   const playerBox = document.getElementById('player-box');
   const resizeBtn = document.getElementById('resize-btn');
+  const closeBtn = document.getElementById('close-btn');
   const iframe = document.getElementById('spotify-player');
   const container = document.getElementById('music-container');
 
   let expanded = false;
 
   toggleBtn.addEventListener('click', () => {
-    const rect = container.getBoundingClientRect();
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-
-    const spaceLeft = rect.left;
-    const spaceRight = windowWidth - rect.right;
-    const spaceBottom = windowHeight - rect.bottom;
-    const spaceTop = rect.top;
-
-    playerBox.style.position = "absolute";
-
-    if (spaceLeft > 350) {
-      // Mostrar à esquerda
-      playerBox.style.right = '60px';
-      playerBox.style.left = 'auto';
-      playerBox.style.top = '0';
-    } else if (spaceRight > 350) {
-      // Mostrar à direita
-      playerBox.style.left = '60px';
-      playerBox.style.right = 'auto';
-      playerBox.style.top = '0';
-    } else if (spaceTop > 400) {
-      // Mostrar acima
-      playerBox.style.left = '0';
-      playerBox.style.top = '-380px';
-    } else {
-      // Mostrar abaixo
-      playerBox.style.left = '0';
-      playerBox.style.top = '60px';
-    }
-
-    playerBox.style.display = playerBox.style.display === 'none' ? 'block' : 'none';
+    playerBox.style.display = playerBox.style.display === 'block' ? 'none' : 'block';
   });
 
   resizeBtn.addEventListener('click', () => {
@@ -158,49 +145,8 @@
     resizeBtn.textContent = expanded ? '−' : '+';
   });
 
-  // Arrastar com mouse
-  let isDragging = false;
-  let offsetX, offsetY;
-
-  container.addEventListener('mousedown', (e) => {
-    isDragging = true;
-    offsetX = e.clientX - container.getBoundingClientRect().left;
-    offsetY = e.clientY - container.getBoundingClientRect().top;
-    container.style.cursor = 'grabbing';
-  });
-
-  document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
-    container.style.left = (e.clientX - offsetX) + 'px';
-    container.style.top = (e.clientY - offsetY) + 'px';
-    container.style.right = 'auto';
-    container.style.bottom = 'auto';
-  });
-
-  document.addEventListener('mouseup', () => {
-    isDragging = false;
-    container.style.cursor = 'move';
-  });
-
-  // Arrastar com toque (mobile)
-  container.addEventListener('touchstart', (e) => {
-    isDragging = true;
-    const touch = e.touches[0];
-    offsetX = touch.clientX - container.getBoundingClientRect().left;
-    offsetY = touch.clientY - container.getBoundingClientRect().top;
-  });
-
-  document.addEventListener('touchmove', (e) => {
-    if (!isDragging) return;
-    const touch = e.touches[0];
-    container.style.left = (touch.clientX - offsetX) + 'px';
-    container.style.top = (touch.clientY - offsetY) + 'px';
-    container.style.right = 'auto';
-    container.style.bottom = 'auto';
-  });
-
-  document.addEventListener('touchend', () => {
-    isDragging = false;
+  closeBtn.addEventListener('click', () => {
+    container.style.display = 'none';
   });
 </script>
 
