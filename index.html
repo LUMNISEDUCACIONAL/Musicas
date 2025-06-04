@@ -1,25 +1,199 @@
-<!-- player.html -->
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Spotify Player</title>
-    <style>
-      body {
-        margin: 0;
-        background: transparent;
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Player Movível - Lumnis</title>
+  <style>
+    :root {
+      --color-yellow: #edff7d;
+      --color-green: #00c670;
+      --color-teal: #48c7c4;
+      --color-blue: #0081e3;
+      --color-dark-blue: #000568;
+      --color-indigo: #1608db;
+      --color-purple: #340868;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f0f0f0;
+    }
+
+    #music-toggle {
+      position: absolute;
+      z-index: 9999;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: var(--color-purple);
+      color: white !important;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      cursor: move;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(6px);
+      touch-action: none;
+    }
+
+    #player-box {
+      position: absolute;
+      background-color: rgba(20, 20, 20, 0.9);
+      color: white;
+      border-radius: 12px;
+      padding: 10px;
+      width: 320px;
+      max-width: 95vw;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(8px);
+      z-index: 9998;
+      display: none;
+    }
+
+    #player-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+      font-weight: bold;
+      color: white;
+    }
+
+    #player-header button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+
+    iframe {
+      border-radius: 8px;
+      width: 100%;
+      height: 80px;
+      border: none;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 480px) {
+      #player-box {
+        width: 90vw;
       }
-    </style>
-  </head>
-  <body>
-    <iframe
-      style="border-radius: 12px"
-      src="https://open.spotify.com/embed/playlist/6ZNmvSH6Zyc3I2Daco1R7c?utm_source=generator&theme=0"
-      width="100%"
-      height="80"
-      frameborder="0"
-      allowtransparency="true"
+
+      iframe {
+        height: 65px;
+      }
+
+      #music-toggle {
+        width: 45px;
+        height: 45px;
+        font-size: 20px;
+      }
+    }
+    #music-toggle {
+  /* outros estilos... */
+  color: white !important; /* <-- aqui está a garantia */
+}
+
+  </style>
+</head>
+<body>
+<button id="music-toggle" style="color: white !important;">🎵</button>
+
+
+  <div id="player-box">
+    <div id="player-header">
+      <span>Player Lumnis</span>
+      <button onclick="playerBox.style.display='none'">−</button>
+    </div>
+    <iframe 
+      src="https://open.spotify.com/embed/playlist/6ZNmvSH6Zyc3I2Daco1R7c?utm_source=generator&theme=0" 
+      allowtransparency="true" 
       allow="encrypted-media">
     </iframe>
-  </body>
+  </div>
+
+  <script>
+    const toggleBtn = document.getElementById('music-toggle');
+    const playerBox = document.getElementById('player-box');
+
+    // Recuperar posição salva
+    const savedX = localStorage.getItem('btnX');
+    const savedY = localStorage.getItem('btnY');
+    if (savedX && savedY) {
+      toggleBtn.style.left = savedX + 'px';
+      toggleBtn.style.top = savedY + 'px';
+    } else {
+      toggleBtn.style.left = '20px';
+      toggleBtn.style.top = '20px';
+    }
+
+    // Alternar exibição do player
+    toggleBtn.onclick = () => {
+      if (playerBox.style.display === 'none') {
+        playerBox.style.display = 'block';
+        positionPlayer();
+      } else {
+        playerBox.style.display = 'none';
+      }
+    };
+
+    // Posicionar o player à esquerda do botão
+    function positionPlayer() {
+      const rect = toggleBtn.getBoundingClientRect();
+      const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const playerWidth = playerBox.offsetWidth;
+
+      playerBox.style.left = rect.left + scrollLeft - playerWidth - 10 + 'px';
+      playerBox.style.top = rect.top + scrollTop + 'px';
+    }
+
+    let offsetX, offsetY, isDragging = false;
+
+    function dragStart(e) {
+      isDragging = true;
+      const touch = e.touches ? e.touches[0] : e;
+      offsetX = touch.clientX - toggleBtn.offsetLeft;
+      offsetY = touch.clientY - toggleBtn.offsetTop;
+      e.preventDefault();
+    }
+
+    function dragMove(e) {
+      if (!isDragging) return;
+      const touch = e.touches ? e.touches[0] : e;
+      const x = touch.clientX - offsetX;
+      const y = touch.clientY - offsetY;
+
+      toggleBtn.style.left = `${x}px`;
+      toggleBtn.style.top = `${y}px`;
+
+      localStorage.setItem('btnX', x);
+      localStorage.setItem('btnY', y);
+
+      positionPlayer();
+    }
+
+    function dragEnd() {
+      isDragging = false;
+    }
+
+    // Mouse
+    toggleBtn.addEventListener('mousedown', dragStart);
+    document.addEventListener('mousemove', dragMove);
+    document.addEventListener('mouseup', dragEnd);
+
+    // Touch
+    toggleBtn.addEventListener('touchstart', dragStart);
+    document.addEventListener('touchmove', dragMove);
+    document.addEventListener('touchend', dragEnd);
+  </script>
+
+</body>
 </html>
