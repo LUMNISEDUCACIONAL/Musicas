@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Player Movível - Lumnis</title>
+  <title>Player Lumnis Arrastável</title>
   <style>
     :root {
       --color-yellow: #edff7d;
@@ -21,9 +21,18 @@
       background: #f0f0f0;
     }
 
-    #music-toggle {
-      position: absolute;
+    #music-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px; /* Inicial no canto inferior direito */
       z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: move;
+    }
+
+    #music-toggle {
       width: 50px;
       height: 50px;
       border-radius: 50%;
@@ -34,14 +43,12 @@
       align-items: center;
       justify-content: center;
       border: none;
-      cursor: move;
+      cursor: grab;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
       backdrop-filter: blur(6px);
-      touch-action: none;
     }
 
     #player-box {
-      position: absolute;
       background-color: rgba(20, 20, 20, 0.9);
       color: white;
       border-radius: 12px;
@@ -50,150 +57,152 @@
       max-width: 95vw;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
       backdrop-filter: blur(8px);
-      z-index: 9998;
       display: none;
+      position: absolute;
     }
 
     #player-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-family: Arial, sans-serif;
-      font-size: 14px;
-      font-weight: bold;
-      color: white;
+      margin-bottom: 8px;
     }
 
-    #player-header button {
-      background: none;
+    #resize-btn {
+      background: transparent;
       border: none;
       color: white;
       font-size: 18px;
       cursor: pointer;
-      margin-left: 10px;
     }
 
     iframe {
-      border-radius: 8px;
+      border-radius: 12px;
       width: 100%;
-      height: 80px;
-      border: none;
-      margin-top: 8px;
+      transition: height 0.3s ease;
     }
 
-    @media (max-width: 480px) {
+    @media (max-width: 600px) {
       #player-box {
-        width: 90vw;
-      }
-
-      iframe {
-        height: 65px;
-      }
-
-      #music-toggle {
-        width: 45px;
-        height: 45px;
-        font-size: 20px;
+        width: 260px;
       }
     }
-    #music-toggle {
-  /* outros estilos... */
-  color: white !important; /* <-- aqui está a garantia */
-}
-
   </style>
 </head>
 <body>
-<button id="music-toggle" style="color: white !important;">🎵</button>
 
-
+<div id="music-container">
+  <button id="music-toggle">🎵</button>
   <div id="player-box">
     <div id="player-header">
-      <span>Player Lumnis</span>
-      <button onclick="playerBox.style.display='none'">−</button>
+      <span>Playlist Lumnis</span>
+      <button id="resize-btn">+</button>
     </div>
-    <iframe 
-      src="https://open.spotify.com/embed/playlist/6ZNmvSH6Zyc3I2Daco1R7c?utm_source=generator&theme=0" 
-      allowtransparency="true" 
+    <iframe id="spotify-player"
+      src="https://open.spotify.com/embed/playlist/6ZNmvSH6Zyc3I2Daco1R7c?utm_source=generator&amp;theme=0"
+      height="80"
+      frameborder="0"
+      allowtransparency="true"
       allow="encrypted-media">
     </iframe>
   </div>
+</div>
 
-  <script>
-    const toggleBtn = document.getElementById('music-toggle');
-    const playerBox = document.getElementById('player-box');
+<script>
+  const toggleBtn = document.getElementById('music-toggle');
+  const playerBox = document.getElementById('player-box');
+  const resizeBtn = document.getElementById('resize-btn');
+  const iframe = document.getElementById('spotify-player');
+  const container = document.getElementById('music-container');
 
-    // Recuperar posição salva
-    const savedX = localStorage.getItem('btnX');
-    const savedY = localStorage.getItem('btnY');
-    if (savedX && savedY) {
-      toggleBtn.style.left = savedX + 'px';
-      toggleBtn.style.top = savedY + 'px';
+  let expanded = false;
+
+  toggleBtn.addEventListener('click', () => {
+    const rect = container.getBoundingClientRect();
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    const spaceLeft = rect.left;
+    const spaceRight = windowWidth - rect.right;
+    const spaceBottom = windowHeight - rect.bottom;
+    const spaceTop = rect.top;
+
+    playerBox.style.position = "absolute";
+
+    if (spaceLeft > 350) {
+      // Mostrar à esquerda
+      playerBox.style.right = '60px';
+      playerBox.style.left = 'auto';
+      playerBox.style.top = '0';
+    } else if (spaceRight > 350) {
+      // Mostrar à direita
+      playerBox.style.left = '60px';
+      playerBox.style.right = 'auto';
+      playerBox.style.top = '0';
+    } else if (spaceTop > 400) {
+      // Mostrar acima
+      playerBox.style.left = '0';
+      playerBox.style.top = '-380px';
     } else {
-      toggleBtn.style.left = '20px';
-      toggleBtn.style.top = '20px';
+      // Mostrar abaixo
+      playerBox.style.left = '0';
+      playerBox.style.top = '60px';
     }
 
-    // Alternar exibição do player
-    toggleBtn.onclick = () => {
-      if (playerBox.style.display === 'none') {
-        playerBox.style.display = 'block';
-        positionPlayer();
-      } else {
-        playerBox.style.display = 'none';
-      }
-    };
+    playerBox.style.display = playerBox.style.display === 'none' ? 'block' : 'none';
+  });
 
-    // Posicionar o player à esquerda do botão
-    function positionPlayer() {
-      const rect = toggleBtn.getBoundingClientRect();
-      const scrollLeft = window.scrollX || document.documentElement.scrollLeft;
-      const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      const playerWidth = playerBox.offsetWidth;
+  resizeBtn.addEventListener('click', () => {
+    expanded = !expanded;
+    iframe.style.height = expanded ? '352px' : '80px';
+    resizeBtn.textContent = expanded ? '−' : '+';
+  });
 
-      playerBox.style.left = rect.left + scrollLeft - playerWidth - 10 + 'px';
-      playerBox.style.top = rect.top + scrollTop + 'px';
-    }
+  // Arrastar com mouse
+  let isDragging = false;
+  let offsetX, offsetY;
 
-    let offsetX, offsetY, isDragging = false;
+  container.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    offsetX = e.clientX - container.getBoundingClientRect().left;
+    offsetY = e.clientY - container.getBoundingClientRect().top;
+    container.style.cursor = 'grabbing';
+  });
 
-    function dragStart(e) {
-      isDragging = true;
-      const touch = e.touches ? e.touches[0] : e;
-      offsetX = touch.clientX - toggleBtn.offsetLeft;
-      offsetY = touch.clientY - toggleBtn.offsetTop;
-      e.preventDefault();
-    }
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    container.style.left = (e.clientX - offsetX) + 'px';
+    container.style.top = (e.clientY - offsetY) + 'px';
+    container.style.right = 'auto';
+    container.style.bottom = 'auto';
+  });
 
-    function dragMove(e) {
-      if (!isDragging) return;
-      const touch = e.touches ? e.touches[0] : e;
-      const x = touch.clientX - offsetX;
-      const y = touch.clientY - offsetY;
+  document.addEventListener('mouseup', () => {
+    isDragging = false;
+    container.style.cursor = 'move';
+  });
 
-      toggleBtn.style.left = `${x}px`;
-      toggleBtn.style.top = `${y}px`;
+  // Arrastar com toque (mobile)
+  container.addEventListener('touchstart', (e) => {
+    isDragging = true;
+    const touch = e.touches[0];
+    offsetX = touch.clientX - container.getBoundingClientRect().left;
+    offsetY = touch.clientY - container.getBoundingClientRect().top;
+  });
 
-      localStorage.setItem('btnX', x);
-      localStorage.setItem('btnY', y);
+  document.addEventListener('touchmove', (e) => {
+    if (!isDragging) return;
+    const touch = e.touches[0];
+    container.style.left = (touch.clientX - offsetX) + 'px';
+    container.style.top = (touch.clientY - offsetY) + 'px';
+    container.style.right = 'auto';
+    container.style.bottom = 'auto';
+  });
 
-      positionPlayer();
-    }
-
-    function dragEnd() {
-      isDragging = false;
-    }
-
-    // Mouse
-    toggleBtn.addEventListener('mousedown', dragStart);
-    document.addEventListener('mousemove', dragMove);
-    document.addEventListener('mouseup', dragEnd);
-
-    // Touch
-    toggleBtn.addEventListener('touchstart', dragStart);
-    document.addEventListener('touchmove', dragMove);
-    document.addEventListener('touchend', dragEnd);
-  </script>
+  document.addEventListener('touchend', () => {
+    isDragging = false;
+  });
+</script>
 
 </body>
 </html>
